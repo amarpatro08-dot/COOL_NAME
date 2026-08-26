@@ -1,1 +1,126 @@
 @import "tailwindcss";
+
+@theme {
+  --font-display: "Chakra Petch", ui-sans-serif, sans-serif;
+  --font-body: "IBM Plex Sans", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-ink-950: #060b14;
+  --color-ink-900: #0a1120;
+  --color-ink-850: #0d1729;
+  --color-ink-800: #111e36;
+  --color-ink-750: #152442;
+  --color-ink-700: #1a2c50;
+  --color-line: #1d2f52;
+  --color-line-soft: #16263f;
+  --color-fog: #8ba1c2;
+  --color-fog-dim: #5d7195;
+  --color-paper: #e9f0fc;
+
+  --color-pass: #3ecf8e;
+  --color-warn: #f0b454;
+  --color-fail: #f2637c;
+  --color-cy: #58c7f3;
+  --color-sim: #b18cf2;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ink-950);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(88, 199, 243, 0.28);
+  color: #eaf6ff;
+}
+
+/* ---------- layered ambient background ---------- */
+.bg-blueprint {
+  background-image:
+    linear-gradient(rgba(88, 199, 243, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(88, 199, 243, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.bg-glowfield {
+  background:
+    radial-gradient(900px 480px at 12% -6%, rgba(88, 199, 243, 0.10), transparent 60%),
+    radial-gradient(800px 520px at 96% 12%, rgba(62, 207, 142, 0.07), transparent 62%),
+    radial-gradient(1000px 700px at 50% 118%, rgba(177, 140, 242, 0.06), transparent 60%);
+}
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(233, 240, 252, 0.022) 0px,
+    rgba(233, 240, 252, 0.022) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* ---------- scroll reveal ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.6, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+.reveal-d1 { transition-delay: 0.08s; }
+.reveal-d2 { transition-delay: 0.16s; }
+.reveal-d3 { transition-delay: 0.24s; }
+
+/* ---------- motion ---------- */
+@keyframes blinkc { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.cursor-blink { animation: blinkc 1s steps(1) infinite; }
+
+@keyframes ledpulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px 1px currentColor; }
+  50% { opacity: 0.45; box-shadow: 0 0 1px 0 currentColor; }
+}
+.led-pulse { animation: ledpulse 1.6s ease-in-out infinite; }
+
+@keyframes dashflow { to { stroke-dashoffset: -28; } }
+.flow-dash { animation: dashflow 1.1s linear infinite; }
+
+@keyframes tickerline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.ticker-grow { transform-origin: left; animation: tickerline 1.1s cubic-bezier(0.3, 0.7, 0.3, 1) forwards; }
+
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.float-slow { animation: floaty 7s ease-in-out infinite; }
+
+.terminal-scroll::-webkit-scrollbar, .code-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.terminal-scroll::-webkit-scrollbar-thumb, .code-scroll::-webkit-scrollbar-thumb {
+  background: #1f3560; border-radius: 4px;
+}
+.terminal-scroll::-webkit-scrollbar-track, .code-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- code token colors ---------- */
+.tok-kw { color: #7fd0ff; }
+.tok-str { color: #a8e6b8; }
+.tok-com { color: #5d7195; font-style: italic; }
+.tok-num { color: #f0b454; }
+.tok-dec { color: #b18cf2; }
+.tok-cls { color: #ffd9a0; }
+.tok-fn { color: #8fe3c6; }
+.tok-key { color: #7fd0ff; }
+.tok-punc { color: #647ba3; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .cursor-blink, .led-pulse, .flow-dash, .float-slow, .ticker-grow { animation: none !important; }
+  .ticker-grow { transform: scaleX(1); }
+  * { scroll-behavior: auto !important; }
+}
