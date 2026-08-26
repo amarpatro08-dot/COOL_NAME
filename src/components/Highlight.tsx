@@ -31,6 +31,37 @@ function tokenizeBash(line: string): Token[] {
   return splitWith(line, re, ["tok-com", "tok-str", "tok-dec", "tok-kw"]);
 }
 
+function tokenizeJson(line: string): Token[] {
+  const re = /("(?:[^"\\]|\\.)*")|(-?\b\d[\d.eE+-]*\b)|\b(true|false|null)\b/g;
+  const out: Token[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  re.lastIndex = 0;
+  while ((m = re.exec(line)) !== null) {
+    if (m.index > last) out.push({ text: line.slice(last, m.index), cls: "" });
+    if (m[1] !== undefined) {
+      const isKey = /^\s*:/.test(line.slice(m.index + m[0].length));
+      out.push({ text: m[0], cls: isKey ? "tok-key" : "tok-str" });
+    } else if (m[2] !== undefined) {
+      out.push({ text: m[0], cls: "tok-num" });
+    } else {
+      out.push({ text: m[0], cls: "tok-kw" });
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < line.length) out.push({ text: line.slice(last), cls: "" });
+  return out;
+}
+
+function tokenizeMarkdown(line: string): Token[] {
+  if (/^#{1,6}\s/.test(line)) return [{ text: line, cls: "tok-kw" }];
+  if (/^```/.test(line)) return [{ text: line, cls: "tok-punc" }];
+  if (/^!\[/.test(line)) return [{ text: line, cls: "tok-dec" }];
+  if (/^(---+|===+)$/.test(line.trim())) return [{ text: line, cls: "tok-punc" }];
+  const re = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\[[^\]]+\]\([^)]+\))|(^(?:>|\||-|\d+\.)\s?)/g;
+  return splitWith(line, re, ["tok-str", "tok-cls", "tok-fn", "tok-punc"]);
+}
+
 function splitWith(line: string, re: RegExp, classes: string[]): Token[] {
   const out: Token[] = [];
   let last = 0;
@@ -60,12 +91,15 @@ export function Highlight({ code, lang }: { code: string; lang: string }) {
         ? tokenizePython
         : lang === "yaml"
           ? tokenizeYaml
-          : lang === "toml"
-            ? tokenizeToml
-            : lang === "bash"
-              ? tokenizeBash
-              : null;
-    return code.split("\n").map((line) => (tok ? tok(line) : [{ text: line, cls: "" }]));
+            : lang === "toml"
+              ? tokenizeToml
+              : lang === "bash"
+                ? tokenizeBash
+                : lang === "json"
+                  ? tokenizeJson
+                  : lang === "markdown"
+                    ? tokenizeMarkdown
+                    : null;    return code.split("\n").map((line) => (tok ? tok(line) : [{ text: line, cls: "" }]));
   }, [code, lang]);
 
   return (

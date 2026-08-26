@@ -1,11 +1,11 @@
 import { Architecture } from "./components/Architecture";
 import { CodeExplorer } from "./components/CodeExplorer";
 import { Council } from "./components/Council";
+import { Readme } from "./components/Readme";
 import { Interview } from "./components/Interview";
 import { Metrics } from "./components/Metrics";
 import { Pipeline } from "./components/Pipeline";
 import { Runner } from "./components/Runner";
-import { Screens } from "./components/Screens";
 import { Suites } from "./components/Suites";
 import { Chip, Icon, Kicker, SectionTitle, useReveal } from "./lib/ui";
 
@@ -18,7 +18,7 @@ const NAV = [
   ["council", "06 council"],
   ["ci", "07 ci/cd"],
   ["interview", "08 defense"],
-  ["shots", "09 readme"],
+  ["readme", "09 readme"],
 ] as const;
 
 function LogoMark({ size = 26 }: { size?: number }) {
@@ -228,7 +228,7 @@ export default function App() {
           <Divider />
           <Interview />
           <Divider />
-          <Screens />
+          <Readme />
           <Divider />
           <Closing />
         </main>
