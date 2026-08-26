@@ -1625,6 +1625,270 @@ network-test report
 echo "open results/report.html"
 `,
   },
+  {
+    path: "README.md",
+    lang: "markdown",
+    purpose: "The front door: what it is, what it is not, how to run it",
+    code: `# nettest — network test automation framework
+
+A pytest-based network test automation platform for Layer 2/3 protocol,
+regression and performance testing — built to run against a **simulated lab
+today** and against physical hardware **through the same interfaces tomorrow**.
+
+> ⚠️ **Scope honesty:** this repository contains *no* vendor hardware
+> integration. All traffic, latency and loss figures are computed from
+> clearly labeled software models (seeded, reproducible). Real-device
+> support is an abstraction seam, documented in
+> docs/ARCHITECTURE.md — not a working feature.
+
+## Why it exists
+
+Most "network automation" portfolios are either (a) tutorial scripts that
+scrape one router, or (b) dashboards over imaginary benchmarks. This project
+practices the unglamorous middle: typed adapter contracts, explicit error
+hierarchies, reproducible simulated runs, and a pipeline that proves it.
+
+## Architecture
+
+CLI → Orchestrator → {TestManager (pytest) · DeviceManager · TrafficManager}
+→ adapters → simulated fabric → metrics → {JSON, HTML, console}.
+
+See **docs/ARCHITECTURE.md** for the full diagram and the rationale for each
+seam (Device, TrafficGenerator, metrics purity).
+
+## Features
+
+- L2 tests: MAC learning/aging, 802.1Q VLAN isolation, unknown-unicast flood
+- L3/L4 tests: ARP cache semantics, ICMP RTT sampling, TCP/UDP streams
+- Six suites: unit · functional · negative · regression · performance · integration
+- Metrics: loss %, p50/p95/p99 latency, RFC 3550 jitter, wire-byte throughput
+- Config-driven lab (config/lab.yaml), structured JSON logging, HTML report
+- GitHub Actions: lint → mypy → tests → 85% coverage gate → artifacts
+
+## Installation
+
+    python -m venv .venv && source .venv/bin/activate
+    pip install -e ".[dev]"
+
+## Usage
+
+    network-test list
+    network-test devices
+    network-test run functional
+    network-test run --suite performance --seed 0xBEEF
+    network-test report
+
+## Test strategy
+
+Every suite runs in the simulated environment. Thresholds live in lab.yaml,
+measurements come from nettest.metrics over generator samples, and the seed
+makes failures reproducible bit-for-bit. See tests/ per-suite docstrings.
+
+## CI/CD
+
+.github/workflows/ci.yml — Python 3.11 + 3.12 matrix, ruff, strict mypy,
+pytest by marker, coverage gate, artifacts uploaded even on failure.
+
+## Design decisions
+
+- pytest is invoked, never reimplemented.
+- The orchestrator is the only module that knows everything; tests don't.
+- metrics.py is pure and source-agnostic — same math on real hardware.
+- No \`except Exception\`: see nettest/errors.py for the typed hierarchy.
+
+## Limitations
+
+No real device has ever been driven by these adapters; simulated latency is a
+distribution model, not a queueing system; the performance suite validates
+measurement machinery, not silicon. Full list: docs/ARCHITECTURE.md.
+
+## Future hardware integration
+
+1. Recorded-output replay adapters (no hardware needed).
+2. One real switch behind an SSH-channel adapter, \`--environment physical\`.
+3. IxiaAdapter implementing TrafficGenerator over the ixnetwork REST API —
+   the seam already exists; no Ixia experience is claimed here.
+
+## Roadmap
+
+Replay adapters → lab.yaml JSON Schema → fault-injection fixtures → first
+physical device → pytest-xdist fan-out → tc/netem impairment model → Ixia.
+
+## License
+
+MIT — see LICENSE. Security posture and reporting: SECURITY.md.
+`,
+  },
+  {
+    path: "docs/ARCHITECTURE.md",
+    lang: "markdown",
+    purpose: "The architecture record: diagram, seams, decisions, limitations",
+    code: `# Architecture
+
+## System diagram
+
+    ┌─────────────────────────┐
+    │   CLI (click) / API     │
+    └───────────┬─────────────┘
+                │
+    ┌───────────▼─────────────┐
+    │     Test Orchestrator   │   loads lab.yaml, builds managers,
+    └───────────┬─────────────┘   invokes pytest, owns reporting
+                │
+     ┌──────────┼───────────┬───────────────┐
+     ▼          ▼           ▼               ▼
+  pytest    DeviceMgr   TrafficMgr    reporting
+   tests        │           │          (json/html)
+     │     ┌────┴─────┐  ┌──┴───────────┐
+     │     ▼          ▼  ▼              ▼
+     │ Simulated    Mock Software    (future)
+     │ Switch      Device TrafficGen IxiaAdapter
+     ▼
+  Simulated fabric ──► metrics.py ──► TrafficStats
+  (MAC/VLAN/ARP)       (pure math)    (loss/latency/
+                                       throughput/jitter)
+
+## The two seams
+
+**Device** (connect/disconnect/configure/execute_command/get_status/reset):
+SimulatedSwitch and MockDevice today; an SSH/NETCONF adapter tomorrow.
+Tests receive a Device from fixtures and never import concrete adapters.
+
+**TrafficGenerator** (configure_stream/start/stop/get_statistics):
+SoftwareTrafficGenerator today. An IxiaAdapter would map StreamConfig →
+topology + trafficItem, start/stop → traffic state, get_statistics → flow
+stats view, and return the same TrafficStats. Nothing above the seam changes.
+
+## Why this shape
+
+- pytest is invoked (pytest.main), not reimplemented — markers, fixtures,
+  junit and parallelism come for free.
+- The orchestrator is the only module allowed to import everything;
+  everything else forms a tree.
+- metrics.py is deliberately source-agnostic: the same pure functions run
+  over simulated samples now and hardware counters later. Thresholds live
+  in lab.yaml so environment-specific budgets are config, not code edits.
+
+## Failure model
+
+nettest/errors.py defines the typed hierarchy: ConfigurationError,
+DeviceError {DeviceUnavailableError, ConnectionTimeoutError, CommandError},
+TrafficGeneratorError, TestTimeoutError, ProtocolError, MetricsError.
+Callers catch specific types; the negative suite asserts each one.
+
+## Reproducibility & anti-flake
+
+- One --seed drives every stochastic element (default 0x5EED).
+- An autouse fixture resets all devices between tests: order-independent.
+- Assertions target stable properties (counter deltas, table membership,
+  raised types), never wall-clock timing.
+
+## Limitations (ranked, owned)
+
+1. Simulated dataplane, not silicon: congestion collapse, bufferbloat,
+   ASIC quirks are out of scope.
+2. No real-device adapter exists yet; parsing real CLI output will be the
+   first painful lesson (hence the replay-adapter step on the roadmap).
+3. The performance suite validates the *measurement machinery*.
+4. Ixia support is a documented mapping, not an integration.
+5. Single lab topology in CI.
+`,
+  },
+  {
+    path: "LICENSE",
+    lang: "markdown",
+    purpose: "MIT — chosen so reviewers can fork and run without friction",
+    code: `MIT License
+
+Copyright (c) 2026 nettest authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+`,
+  },
+  {
+    path: ".gitignore",
+    lang: "bash",
+    purpose: "Keep generated artifacts, venvs and accidental secrets out of history",
+    code: `# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# test & coverage artifacts — generated, never committed
+results/
+coverage.xml
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# editors / os
+.idea/
+.vscode/
+.DS_Store
+
+# never commit anything that looks like a credential
+*.pem
+*.key
+.env
+.env.*
+`,
+  },
+  {
+    path: "SECURITY.md",
+    lang: "markdown",
+    purpose: "Security posture: what's enforced, what's specced for later",
+    code: `# Security
+
+## Enforced today
+
+- **No credentials exist to leak.** The simulated lab authenticates nothing.
+  logging_utils.redact() masks any key matching password/secret/token/
+  api_key/community before a config dict can reach a log sink — the guard
+  exists *before* the first secret does.
+- **No shell execution.** Device "commands" are parsed strings handled by
+  adapter methods; there is no subprocess, no shell=True, no eval, anywhere
+  in src/.
+- **Input validation at the seams.** VLAN IDs, frame sizes and metric inputs
+  are rejected with typed errors (InvalidConfigurationError,
+  TrafficGeneratorError, MetricsError) instead of trusted.
+- **Dependencies are minimal and pinned-by-floor:** pytest, PyYAML, click,
+  Jinja2 (autoescape=True in reporting), jsonschema. Reviewed in CI.
+
+## Specced for the physical phase
+
+- Device credentials will come from environment variables
+  (NETTEST_SSH_PASSWORD etc.), read once in the adapter constructor,
+  never logged, never written to results.json.
+- Transport: an explicit SSH channel (paramiko/Netmiko), command allowlist
+  per adapter role, no dynamic command composition from lab.yaml values.
+
+## Reporting an issue
+
+Open a private vulnerability report on the repository; do not file security
+issues publicly.
+`,
+  },
 ];
 
 export interface TreeNode {

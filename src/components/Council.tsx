@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { COUNCIL_DECISIONS, COUNCIL_PHASE3, FINAL_REVIEW_WEAKNESSES } from "../data/council";
+import { BUILD_PHASES, COUNCIL_DECISIONS, COUNCIL_PHASE3, FINAL_REVIEW_WEAKNESSES } from "../data/council";
 import { Chip, Icon, Kicker, SectionTitle, SeverityChip, useReveal } from "../lib/ui";
 
 export function Council() {
@@ -77,6 +77,44 @@ export function Council() {
                 {d.decision}
               </p>
               <p className="text-[12.5px] leading-relaxed text-fog">{d.rationale}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 12-phase build ledger */}
+      <div className="reveal reveal-d2 mt-12">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="font-display text-xl font-bold text-paper">The build ledger — 12 phases, no silent gates</h3>
+            <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-fog">
+              Every phase closed with DONE and RISK written down before the next one opened. The risks are kept here on
+              purpose — they're the interview talking points nobody writes in a README.
+            </p>
+          </div>
+          <Chip tone="pass">12 / 12 shipped</Chip>
+        </div>
+        <div className="mt-6 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+          {BUILD_PHASES.map((p, i) => (
+            <div
+              key={p.n}
+              className="reveal group rounded-md border border-line bg-ink-900/70 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-cy/40 hover:bg-ink-850"
+              style={{ transitionDelay: `${(i % 4) * 60}ms` }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-fog-dim">
+                  phase {String(p.n).padStart(2, "0")}
+                </span>
+                <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-wider text-pass">
+                  <Icon name="check" size={10} /> done
+                </span>
+              </div>
+              <div className="mt-2 font-display text-[13.5px] font-semibold text-paper">{p.name}</div>
+              <p className="mt-1.5 text-[11.5px] leading-snug text-fog">{p.done}</p>
+              <p className="mt-2.5 border-t border-line-soft pt-2 text-[10.5px] leading-snug text-warn/85">
+                <span className="font-mono uppercase tracking-wider text-warn/70">risk · </span>
+                {p.risk}
+              </p>
             </div>
           ))}
         </div>

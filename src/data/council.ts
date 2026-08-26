@@ -97,6 +97,31 @@ export interface Weakness {
   mitigation: string;
 }
 
+export interface BuildPhase {
+  n: number;
+  name: string;
+  done: string;
+  risk: string;
+}
+
+/**
+ * The 12-phase build process, with the DONE / RISK captured at each gate.
+ */
+export const BUILD_PHASES: BuildPhase[] = [
+  { n: 1, name: "Requirements", done: "Scope frozen: 6 suites, typed errors, simulated-only execution.", risk: "Feature creep toward 'dashboards'" },
+  { n: 2, name: "Architecture", done: "Two seams (Device, TrafficGenerator) + orchestrator tree defined.", risk: "Over-abstracting for hardware that doesn't exist" },
+  { n: 3, name: "Council review", done: "7 adversarial roles; 2 decisions changed, 3 mitigations adopted.", risk: "Consensus bias — forced dissent by format" },
+  { n: 4, name: "Revised architecture", done: "Dropped async + inventory API; added seed, fault injection, metrics tests.", risk: "Revising forever instead of building" },
+  { n: 5, name: "Repo structure", done: "src layout, markers, lab.yaml schema, pyproject with entry point.", risk: "Layout bikeshedding" },
+  { n: 6, name: "MVP", done: "SimulatedSwitch + SoftwareTrafficGenerator + orchestrator running green.", risk: "Simulator becoming a toy with no semantics" },
+  { n: 7, name: "Unit tests", done: "metrics.py: known vectors, boundaries, error contracts.", risk: "Testing trivia instead of math" },
+  { n: 8, name: "Integration tests", done: "Seam tests: connect cycles, hot-swap, results schema.", risk: "Integration suite duplicating unit coverage" },
+  { n: 9, name: "CI/CD", done: "3.11/3.12 matrix, ruff, strict mypy, coverage gate 85%, artifacts.", risk: "CI as theater — gate has a number instead" },
+  { n: 10, name: "Reporting", done: "One JSON document → console + HTML; env label in every view.", risk: "Hand-maintained duplication across views" },
+  { n: 11, name: "Documentation", done: "README, ARCHITECTURE.md, per-file docstrings, interview prep.", risk: "Docs drifting from code — kept co-located" },
+  { n: 12, name: "Final review", done: "Hostile council pass; 10 weaknesses ranked with mitigations.", risk: "Polishing instead of shipping" },
+];
+
 export const FINAL_REVIEW_WEAKNESSES: Weakness[] = [
   {
     rank: 1,
