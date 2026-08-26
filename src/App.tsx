@@ -5,6 +5,7 @@ import { Interview } from "./components/Interview";
 import { Metrics } from "./components/Metrics";
 import { Pipeline } from "./components/Pipeline";
 import { Runner } from "./components/Runner";
+import { Screens } from "./components/Screens";
 import { Suites } from "./components/Suites";
 import { Chip, Icon, Kicker, SectionTitle, useReveal } from "./lib/ui";
 
@@ -17,6 +18,7 @@ const NAV = [
   ["council", "06 council"],
   ["ci", "07 ci/cd"],
   ["interview", "08 defense"],
+  ["shots", "09 readme"],
 ] as const;
 
 function LogoMark({ size = 26 }: { size?: number }) {
@@ -97,7 +99,7 @@ function Closing() {
   return (
     <section id="closing" className="relative mx-auto max-w-7xl px-5 py-24 sm:px-8" ref={ref}>
       <div className="reveal">
-        <Kicker index="09">the honest part</Kicker>
+        <Kicker index="10">the honest part</Kicker>
         <SectionTitle sub="Every serious project ships with a list of things it is not. This one is written down, ranked, and owned — including by the council's hostile review above.">
           Limitations in writing,
           <br />
@@ -165,7 +167,7 @@ function Footer() {
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fog-dim">repository</div>
             <div className="mt-3 flex max-w-sm flex-wrap gap-1.5">
-              {["src/nettest/", "tests/ ×6 suites", "config/lab.yaml", ".github/workflows/ci.yml", "docs/", "examples/", "pyproject.toml", "LICENSE", ".gitignore", "README.md"].map((f) => (
+              {["src/nettest/", "tests/ ×6 suites", "config/lab.yaml", ".github/workflows/ci.yml", "docs/", "docs/img/ ×3", "examples/", "pyproject.toml", "LICENSE", ".gitignore", "SECURITY.md", "README.md"].map((f) => (
                 <code key={f} className="rounded border border-line-soft bg-ink-900 px-2 py-1 font-mono text-[10.5px] text-fog transition-colors hover:border-cy/40 hover:text-cy">
                   {f}
                 </code>
@@ -225,6 +227,8 @@ export default function App() {
           <Pipeline />
           <Divider />
           <Interview />
+          <Divider />
+          <Screens />
           <Divider />
           <Closing />
         </main>
